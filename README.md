@@ -1,6 +1,6 @@
 # 📘 TypeScript CRUD API with Node.js, Express & MySQL
 
-A fully typed REST API built using **TypeScript**, **Node.js**, **Express**, and **MySQL (Sequelize ORM)**. This project demonstrates CRUD operations, validation, and a scalable backend structure ready for frontend integration.
+A fully typed REST API built using **TypeScript**, **Node.js**, and **MySQL (Sequelize ORM)**. This project demonstrates CRUD operations, validation, and a scalable backend structure ready for frontend integration.
 
 ---
 
@@ -19,12 +19,10 @@ A fully typed REST API built using **TypeScript**, **Node.js**, **Express**, and
 ## 🧰 Tech Stack
 
 * Node.js
-* Express.js
 * TypeScript
 * MySQL
 * Sequelize
 * Joi
-* JWT (jsonwebtoken)
 * bcryptjs
 
 ---
