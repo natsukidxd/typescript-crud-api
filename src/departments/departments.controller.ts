@@ -7,6 +7,56 @@ import { validateRequest } from "../_middleware/validateRequest";
 
 const router = Router();
 
+/**
+ * @openapi
+ * tags:
+ *   - name: Departments
+ * /auth/departments:
+ *   get:
+ *     summary: List departments (admin)
+ *     tags: [Departments]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: OK
+ *   post:
+ *     summary: Create department (admin)
+ *     tags: [Departments]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Created
+ * /auth/departments/{id}:
+ *   put:
+ *     summary: Update department (admin)
+ *     tags: [Departments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK
+ *   delete:
+ *     summary: Delete department (admin)
+ *     tags: [Departments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK
+ */
+
 router.use(authenticate, requireAdmin);
 router.get("/", getAll);
 router.post("/", createSchema, create);
