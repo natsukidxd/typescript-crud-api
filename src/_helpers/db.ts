@@ -6,6 +6,10 @@ import { Sequelize } from 'sequelize';
 
 export interface Database {
     User: any; // We'll type this properly after creating the model
+    Department: any;
+    Employee: any;
+    Request: any;
+    RequestItem: any;
 }
 
 export const db: Database = {} as Database;
@@ -24,6 +28,33 @@ export async function initialize(): Promise<void> {
     // Initialize models
     const { default: userModel } = await import('../users/user.model');
     db.User = userModel(sequelize);
+    const { default: departmentModel } = await import('../departments/department.model');
+    db.Department = departmentModel(sequelize);
+    const { default: employeeModel } = await import('../employees/employee.model');
+    db.Employee = employeeModel(sequelize);
+    const { default: requestModel } = await import('../requests/request.model');
+    db.Request = requestModel(sequelize);
+    const { default: requestItemModel } = await import('../requests/requestItem.model');
+    db.RequestItem = requestItemModel(sequelize);
+
+    db.Department.hasMany(db.Employee, {
+        foreignKey: 'departmentId',
+        onDelete: 'RESTRICT',
+        onUpdate: 'CASCADE',
+    });
+    db.Employee.belongsTo(db.Department, {
+        foreignKey: 'departmentId',
+    });
+
+    db.Request.hasMany(db.RequestItem, {
+        as: 'items',
+        foreignKey: 'requestId',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    });
+    db.RequestItem.belongsTo(db.Request, {
+        foreignKey: 'requestId',
+    });
 
     // Sync models with database
     await sequelize.sync({ alter: true });
