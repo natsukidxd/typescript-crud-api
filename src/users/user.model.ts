@@ -11,6 +11,7 @@ export interface UserAttributes {
   firstName: string;
   lastName: string;
   role: string;
+  verified: boolean;
   createdAt: Date; //ADD THIS
   updatedAt: Date; //ADD THIS
 }
@@ -33,6 +34,7 @@ export class User
   public firstName!: string;
   public lastName!: string;
   public role!: string;
+  public verified!: boolean;
   public readonly createdAt!: Date; // ADD THIS
   public readonly updatedAt!: Date; // ADD THIS
 }
@@ -70,6 +72,11 @@ export default function (sequelize: Sequelize): typeof User {
       role: {
         type: DataTypes.STRING,
         allowNull: false,
+      },
+      verified: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
       },
       createdAt: {
         type: DataTypes.DATE,

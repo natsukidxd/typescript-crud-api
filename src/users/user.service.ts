@@ -4,6 +4,8 @@ import { db } from "../_helpers/db";
 import { Role } from "../_helpers/role";
 import { User, UserCreationAttributes } from "./user.model";
 
+const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS || 12);
+
 export const userService = {
   getAll,
   getById,
@@ -32,7 +34,7 @@ async function create(
   }
 
   // Hash password
-  const passwordHash = await bcrypt.hash(params.password, 18);
+  const passwordHash = await bcrypt.hash(params.password, BCRYPT_ROUNDS);
 
   // Create user (exclude password from saved fields)
   await db.User.create({
@@ -49,7 +51,7 @@ async function update(
   const user = await getUser(id);
   // Hash new password if provided
   if (params.password) {
-    params.passwordHash = await bcrypt.hash(params.password, 10);
+    params.passwordHash = await bcrypt.hash(params.password, BCRYPT_ROUNDS);
     delete params.password; // Remove plain password
   }
 
