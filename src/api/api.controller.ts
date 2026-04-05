@@ -3,8 +3,8 @@ import { Router } from "express";
 import Joi from "joi";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import config from "../../config.json";
 import { db } from "../_helpers/db";
+import { env } from "../_helpers/env";
 import { Role } from "../_helpers/role";
 import accountsController from "../accounts/accounts.controller";
 import departmentsController from "../departments/departments.controller";
@@ -15,7 +15,136 @@ import { authenticate, requireAdmin } from "../_middleware/authenticate";
 
 const router = Router();
 
-const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS || 12);
+const BCRYPT_ROUNDS = env.BCRYPT_ROUNDS;
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     RegisterRequest:
+ *       type: object
+ *       required: [username, password, firstName, lastName]
+ *       properties:
+ *         username: { type: string, example: "user@example.com" }
+ *         password: { type: string, example: "password123" }
+ *         firstName: { type: string, example: "John" }
+ *         lastName: { type: string, example: "Doe" }
+ *     RegisterResponse:
+ *       type: object
+ *       properties:
+ *         message: { type: string }
+ *     LoginRequest:
+ *       type: object
+ *       required: [username, password]
+ *       properties:
+ *         username: { type: string, example: "user@example.com" }
+ *         password: { type: string, example: "password123" }
+ *     AuthUser:
+ *       type: object
+ *       properties:
+ *         id: { type: integer, example: 1 }
+ *         username: { type: string, example: "user@example.com" }
+ *         email: { type: string, example: "user@example.com" }
+ *         firstName: { type: string, example: "John" }
+ *         lastName: { type: string, example: "Doe" }
+ *         role: { type: string, enum: [admin, user], example: "user" }
+ *     LoginResponse:
+ *       type: object
+ *       properties:
+ *         token: { type: string }
+ *         user:
+ *           $ref: "#/components/schemas/AuthUser"
+ *     ProfileResponse:
+ *       type: object
+ *       properties:
+ *         user:
+ *           $ref: "#/components/schemas/AuthUser"
+ */
+
+export interface RegisterRequestBody {
+  username: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface RegisterResponseBody {
+  message: string;
+}
+
+export interface LoginRequestBody {
+  username: string;
+  password: string;
+}
+
+export interface AuthUser {
+  id: number;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: "admin" | "user";
+}
+
+export interface LoginResponseBody {
+  token: string;
+  user: AuthUser;
+}
+
+export interface ProfileResponseBody {
+  user: AuthUser;
+}
+
+/**
+ * @openapi
+ * /auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: "#/components/schemas/RegisterRequest"
+ *     responses:
+ *       201:
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/RegisterResponse"
+ * /auth/login:
+ *   post:
+ *     summary: Login (JWT)
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: "#/components/schemas/LoginRequest"
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/LoginResponse"
+ * /auth/profile:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ProfileResponse"
+ */
 
 router.post("/register", registerSchema, register);
 router.post("/login", loginSchema, login);
@@ -29,7 +158,7 @@ router.use("/requests", requestsController);
 
 export default router;
 
-function toClientRole(role: string): string {
+function toClientRole(role: string): AuthUser["role"] {
   const value = String(role || "");
   return value.toLowerCase() === "admin" || value === Role.Admin ? "admin" : "user";
 }
@@ -42,7 +171,7 @@ function toClientUser(user: any) {
     firstName: user.firstName,
     lastName: user.lastName,
     role: toClientRole(user.role),
-  };
+  } satisfies AuthUser;
 }
 
 function registerSchema(req: Request, res: Response, next: NextFunction): void {
@@ -56,12 +185,7 @@ function registerSchema(req: Request, res: Response, next: NextFunction): void {
 }
 
 async function register(req: Request, res: Response): Promise<void> {
-  const { username, password, firstName, lastName } = req.body as {
-    username: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-  };
+  const { username, password, firstName, lastName } = req.body as RegisterRequestBody;
 
   const existing = await db.User.findOne({ where: { email: username } });
   if (existing) {
@@ -83,7 +207,7 @@ async function register(req: Request, res: Response): Promise<void> {
     verified: true,
   });
 
-  res.status(201).json({ message: "Registration successful" });
+  res.status(201).json({ message: "Registration successful" } satisfies RegisterResponseBody);
 }
 
 function loginSchema(req: Request, res: Response, next: NextFunction): void {
@@ -95,7 +219,7 @@ function loginSchema(req: Request, res: Response, next: NextFunction): void {
 }
 
 async function login(req: Request, res: Response): Promise<void> {
-  const { username, password } = req.body as { username: string; password: string };
+  const { username, password } = req.body as LoginRequestBody;
 
   const user = await db.User.scope("withHash").findOne({ where: { email: username } });
   if (!user) {
@@ -109,11 +233,11 @@ async function login(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const token = jwt.sign({ sub: user.id, role: user.role }, config.jwtSecret, {
+  const token = jwt.sign({ sub: user.id, role: user.role }, env.JWT_SECRET, {
     expiresIn: "7d",
   });
 
-  res.json({ token, user: toClientUser(user) });
+  res.json({ token, user: toClientUser(user) } satisfies LoginResponseBody);
 }
 
 async function profile(req: Request, res: Response): Promise<void> {
@@ -129,7 +253,7 @@ async function profile(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  res.json({ user: toClientUser(user) });
+  res.json({ user: toClientUser(user) } satisfies ProfileResponseBody);
 }
 
 async function adminDashboard(req: Request, res: Response): Promise<void> {
