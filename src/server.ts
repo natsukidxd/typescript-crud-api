@@ -3,6 +3,8 @@ import express, { Application } from "express";
 import cors from "cors";
 import { errorHandler } from "./_middleware/errorHandler";
 import { initialize } from "./_helpers/db";
+import { env } from "./_helpers/env";
+import { setupSwagger } from "./_helpers/swagger";
 import usersController from "./users/users.controller";
 import apiController from "./api/api.controller";
 
@@ -32,9 +34,15 @@ app.use(express.static("public"));
 
 // API Routes
 app.use("/api", apiController);
+app.use("/auth", apiController);
 app.use("/users", usersController);
 
+setupSwagger(app);
+
 app.use("/api", (req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
+app.use("/auth", (req, res) => {
   res.status(404).json({ error: "Not found" });
 });
 
@@ -42,7 +50,7 @@ app.use("/api", (req, res) => {
 app.use(errorHandler);
 
 // Start server initialize database
-const PORT = process.env.PORT || 4000;
+const PORT = env.PORT;
 
 initialize()
   .then(() => {
