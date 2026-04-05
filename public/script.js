@@ -29,6 +29,13 @@ function setOutputText(elementId, value) {
 
 let currentUser = null;
 
+const state = {
+  accounts: [],
+  departments: [],
+  employees: [],
+  requests: [],
+};
+
 // Authentication States
 
 function setAuthState(isAuthenticated, user = null) {
