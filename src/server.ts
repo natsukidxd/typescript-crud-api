@@ -4,15 +4,33 @@ import cors from "cors";
 import { errorHandler } from "./_middleware/errorHandler";
 import { initialize } from "./_helpers/db";
 import usersController from "./users/users.controller";
+import apiController from "./api/api.controller";
 
 const app: Application = express();
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      const allowed = new Set([
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:4000",
+        "http://127.0.0.1:4000",
+      ]);
+      if (!origin || origin === "null" || allowed.has(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
+  }),
+);
+app.use(express.static("public"));
 
 // API Routes
+app.use("/api", apiController);
 app.use("/users", usersController);
 
 // Global Error Handler (must be last)
