@@ -7,6 +7,30 @@ import { validateRequest } from "../_middleware/validateRequest";
 
 const router = Router();
 
+/**
+ * @openapi
+ * tags:
+ *   - name: Requests
+ * /auth/requests/me:
+ *   get:
+ *     summary: List current user's requests
+ *     tags: [Requests]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: OK
+ * /auth/requests:
+ *   post:
+ *     summary: Create a request (current user)
+ *     tags: [Requests]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Created
+ */
+
 router.use(authenticate);
 router.get("/me", getMine);
 router.post("/", createSchema, create);
