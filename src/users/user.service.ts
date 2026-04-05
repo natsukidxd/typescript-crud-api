@@ -1,13 +1,15 @@
 //src/users/user.service.ts
 import bcrypt from "bcryptjs";
 import { db } from "../_helpers/db";
+import { env } from "../_helpers/env";
 import { Role } from "../_helpers/role";
 import { User, UserCreationAttributes } from "./user.model";
 
-const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS || 12);
+const BCRYPT_ROUNDS = env.BCRYPT_ROUNDS;
 
 export const userService = {
   getAll,
+  getAllPaged,
   getById,
   create,
   update,
@@ -16,6 +18,37 @@ export const userService = {
 
 async function getAll(): Promise<User[]> {
   return await db.User.findAll();
+}
+
+export type UsersPagedResult = {
+  data: User[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+async function getAllPaged(page: number, limit: number): Promise<UsersPagedResult> {
+  const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
+  const safePage = Math.max(1, Math.floor(page));
+  const offset = (safePage - 1) * safeLimit;
+
+  const result = await db.User.findAndCountAll({
+    limit: safeLimit,
+    offset,
+    order: [["id", "ASC"]],
+  });
+
+  const total = Number(result.count) || 0;
+  const totalPages = Math.max(1, Math.ceil(total / safeLimit));
+
+  return {
+    data: result.rows,
+    page: safePage,
+    limit: safeLimit,
+    total,
+    totalPages,
+  };
 }
 
 async function getById(id: number): Promise<User> {

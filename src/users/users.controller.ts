@@ -17,11 +17,31 @@ router.delete("/:id", _delete);
 
 export default router;
 
+type UsersQueryParams = {
+  page?: string;
+  limit?: string;
+};
+
 // ROUTE HANDLERS (typed)
-function getAll(req: Request, res: Response, next: NextFunction): void {
+function getAll(req: Request<{}, unknown, unknown, UsersQueryParams>, res: Response, next: NextFunction): void {
+  const pageRaw = req.query.page;
+  const limitRaw = req.query.limit;
+
+  const wantsPaging = pageRaw !== undefined || limitRaw !== undefined;
+  if (!wantsPaging) {
+    userService
+      .getAll()
+      .then((users) => res.json(users))
+      .catch(next);
+    return;
+  }
+
+  const page = Number(pageRaw ?? 1);
+  const limit = Number(limitRaw ?? 10);
+
   userService
-    .getAll()
-    .then((users) => res.json(users))
+    .getAllPaged(page, limit)
+    .then((result) => res.json(result))
     .catch(next);
 }
 function getById(req: Request, res: Response, next: NextFunction): void {
