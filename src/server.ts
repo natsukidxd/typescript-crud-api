@@ -14,16 +14,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowed = new Set([
-        "http://localhost:5500",
-        "http://127.0.0.1:5500",
-        "http://localhost:4000",
-        "http://127.0.0.1:4000",
-      ]);
-      if (!origin || origin === "null" || allowed.has(origin)) {
-        return callback(null, true);
+      if (!origin || origin === "null") return callback(null, true);
+      try {
+        const url = new URL(origin);
+        const host = url.hostname.toLowerCase();
+        if (host === "localhost" || host === "127.0.0.1") {
+          return callback(null, true);
+        }
+        return callback(new Error("Not allowed by CORS"));
+      } catch {
+        return callback(new Error("Not allowed by CORS"));
       }
-      return callback(new Error("Not allowed by CORS"));
     },
   }),
 );
@@ -32,6 +33,10 @@ app.use(express.static("public"));
 // API Routes
 app.use("/api", apiController);
 app.use("/users", usersController);
+
+app.use("/api", (req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
 
 // Global Error Handler (must be last)
 app.use(errorHandler);
