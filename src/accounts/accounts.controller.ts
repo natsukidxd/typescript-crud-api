@@ -3,12 +3,77 @@ import { Router } from "express";
 import Joi from "joi";
 import bcrypt from "bcryptjs";
 import { db } from "../_helpers/db";
+import { env } from "../_helpers/env";
 import { authenticate, requireAdmin } from "../_middleware/authenticate";
 import { validateRequest } from "../_middleware/validateRequest";
 
 const router = Router();
 
-const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS || 12);
+const BCRYPT_ROUNDS = env.BCRYPT_ROUNDS;
+
+/**
+ * @openapi
+ * tags:
+ *   - name: Accounts
+ * /auth/accounts:
+ *   get:
+ *     summary: List accounts (admin)
+ *     tags: [Accounts]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: OK
+ *   post:
+ *     summary: Create account (admin)
+ *     tags: [Accounts]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Created
+ * /auth/accounts/{id}:
+ *   put:
+ *     summary: Update account (admin)
+ *     tags: [Accounts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK
+ *   delete:
+ *     summary: Delete account (admin)
+ *     tags: [Accounts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK
+ * /auth/accounts/{id}/password:
+ *   put:
+ *     summary: Reset account password (admin)
+ *     tags: [Accounts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK
+ */
 
 router.use(authenticate, requireAdmin);
 router.get("/", getAll);
